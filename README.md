@@ -5,6 +5,9 @@ Goal : To compare the results and efficiency between various techniques observed
 
 Contrubutors: 
 Athul  Muralidharan,
+
 Sachin Haldavanekar,
+
 Meghna Venkatesh 
-=============
+
+-
