@@ -34,16 +34,28 @@ import org.apache.lucene.util.Version;
  * 
  * To completely index all files again, delete the index folder and run the 
  * program.
+ * 
+ * Queries sent to this program with multiple words should have words separated
+ * with the following string :    <-->
  */
 public class Lucene{
 
+	// Declaring Constants
+	private static final String SYS_USER_DIR = System.getProperty("user.dir") ;
+	private static final String QUERY_DELIMITER = "<-->";
+	private static final String SPACE_KEY = " ";
+	private static final String OUTPUT_FILE_NAME = "Lucene_Result.txt";
+	private static final int MAX_RESULTS_PER_QUERY = 100;
+
+	// Declaring static variables
 	private static Analyzer analyzer = new SimpleAnalyzer(Version.LUCENE_47);
 	private IndexWriter writer;
 	private ArrayList<File> queue = new ArrayList<File>();
 
+
 	/** Main function
 	 *  
-	 * @param - args
+	 * @param args
 	 * 			args[0] - will contain path of the folder to store index in.
 	 * 			args[1] - will contain path of the folder to get raw documents from.
 	 *			All queries will be in the args and each word in a query will be
@@ -54,96 +66,133 @@ public class Lucene{
 	 * **/
 	public static void main(String[] args) throws IOException {
 
-		String indexLocation = null;
-		String sysUserDir = System.getProperty("user.dir") ;
-		String s = args[0].equalsIgnoreCase("")? sysUserDir + "/index":args[0];
-		File f = new File(s); 
+		// Chooses default index location if the args[0] is an empty string.
+		String indexLocation = args[0].equalsIgnoreCase("")? SYS_USER_DIR + "/index":args[0];
+		//==========================================================
+		// Index files if not already indexed
+		//==========================================================
+		indexer(args[1],indexLocation);
+		// =========================================================
+		// Now search
+		// =========================================================
+		findResultsAndPrint(args, indexLocation);
+	}
 
+	/**
+	 * finds Result for all Queries and calls the printToFile function.
+	 * 
+	 * @param rawFileLoc
+	 * 			denotes the path where the raw source code files are located.
+	 * 		  indexLocation
+	 * 			denotes the path where indexes have to be stored.
+	 * 				
+	 * @throws java.io.IOException
+	 *             	when exception closing
+	 */
+	private static void indexer(String rawFileLoc, String indexLocation) {
+
+		File f = new File(indexLocation); 
 		Lucene indexer = null;
-		indexLocation = s;
-		
+
 		if (!f.exists()) {
 			if (f.mkdir()) {
 				try {
 					indexer = new Lucene(f);
-				} catch (Exception ex) {
-					System.out.println("Cannot create index..." + ex.getMessage());
+					rawFileLoc = rawFileLoc.equalsIgnoreCase("")? SYS_USER_DIR + "/source":rawFileLoc;
+					indexer.indexFileOrDirectory(rawFileLoc);	// try to add file into the index
+					// ===================================================
+					// after adding, we always have to call the
+					// closeIndex, otherwise the index is not created
+					// ===================================================
+					indexer.closeIndex();
+				} catch (Exception e) {
+					System.out.println("Error indexing File/Directory" + rawFileLoc + " : "
+							+ e.getMessage());
 					System.exit(-1);
 				}
-				// ===================================================
-				// read input from user until he enters q for quit
-				// ===================================================
-				try {
-					s = args[0].equalsIgnoreCase("")? sysUserDir + "/source":args[1];
-					// try to add file into the index
-					indexer.indexFileOrDirectory(s);
-				} catch (Exception e) {
-					System.out.println("Error indexing " + s + " : "
-							+ e.getMessage());
-				}
-				indexer.closeIndex();
 			}
 		}
+	}
 
-		// ===================================================
-		// after adding, we always have to call the
-		// closeIndex, otherwise the index is not created
-		// ===================================================
-		
 
-		// =========================================================
-		// Now search
-		// =========================================================
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(
-				indexLocation)));
+
+	/**
+	 * finds Result for all Queries and calls the printToFile function.
+	 * 
+	 * @param queries
+	 * 				stores the args array.
+	 * 		  indexLocation
+	 * 				denotes the path where indexes are stored.
+	 * 
+	 * @throws java.io.IOException
+	 *          when exception closing
+	 */
+	private static void findResultsAndPrint(String[] queries, String indexLocation) throws IOException {
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(indexLocation)));
 		IndexSearcher searcher = new IndexSearcher(reader);
-		TopScoreDocCollector collector;
+		TopScoreDocCollector collector = null;		
+		FileWriter docFileWriter = new FileWriter(new File(OUTPUT_FILE_NAME));
 
-		File docFile = new File("Doc_score.txt");
-		FileWriter docFileWriter = new FileWriter(docFile);
-
-		for(int i = 2; i <= args.length; i++)	{
+		for(int i = 2; i < queries.length; i++)	{
 			try {
-				String Qid = args[i].split(":")[0];
-				String delimiter = "<-->";
-				String spaceBar = " ";
-				String input_query = args[i].split(":")[1].replace(delimiter,spaceBar);
-				Query q = new QueryParser(
-						Version.LUCENE_47, 
-						"contents", 
-						analyzer).parse(
-								input_query.toLowerCase());
+				String input_query = queries[i].split(":")[1].replace(QUERY_DELIMITER,SPACE_KEY);
+				Query q = new QueryParser(Version.LUCENE_47, "contents", analyzer)
+						.parse(input_query.toLowerCase());
 				collector = TopScoreDocCollector.create(1000, true);
 				searcher.search(q, collector);
 				ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
-				// 4. display results
-				System.out.println("Found " + hits.length + " hits.");
-				for (int j = 0; j < Math.min(100, hits.length); ++j) {
-					int docId = hits[j].doc;
-					Document d = searcher.doc(docId);
-					String filename = d.get("filename");
-					filename = filename.substring(0, filename.length() - 4);
-					String concatenatedOutput =
-							Qid + " Q0" + 
-									" " +  filename +
-									"\t" + (j + 1) +  
-									"\t" + hits[j].score + 
-									"\tLucene" +
-									System.lineSeparator();
-					System.out.print(concatenatedOutput);
-					docFileWriter.write(concatenatedOutput);
-				}
-
-				docFileWriter.write("\n\n");
-				Qid = "";
-				input_query = "";
+				//====================================
+				// Display Results to console and File
+				//====================================				
+				printToFile(hits, searcher, queries[i].split(":")[0], docFileWriter);
 			}
 			catch(Exception e){
+				System.out.println("Error in Querying" + e.getMessage());
 				System.exit(-1);
 			}
 		}
 		docFileWriter.close();
+	}
+
+	/**
+	 * Prints results to a file
+	 * 
+	 * @param : hits
+	 * 				stores all the htis found for a particular query.
+	 * 			searcher
+	 * 				IndexSearcher of Lucene to find a doc by its docId.
+	 * 			docFileWriter
+	 * 				FileWriter object to write output to text file.
+	 * 
+	 * @throws java.io.IOException
+	 *             when exception closing
+	 */
+	private static void printToFile(ScoreDoc[] hits, IndexSearcher searcher, String Qid, FileWriter docFileWriter) throws IOException {
+		try {			
+			System.out.println("Found " + hits.length + " hits.");	//SOP
+			for (int j = 0; j < Math.min(MAX_RESULTS_PER_QUERY, hits.length); ++j) {
+				int docId = hits[j].doc;
+				Document d = searcher.doc(docId);
+				String filename = d.get("filename");
+				filename = filename.substring(0, filename.length() - 4);
+				String concatenatedOutput = 
+						Qid + 
+						" Q0" + 
+						" " +  filename +
+						"\t" + (j + 1) +  
+						"\t" + hits[j].score + 
+						"\tLucene" +
+						System.lineSeparator();
+				System.out.print(concatenatedOutput);				//SOP
+				docFileWriter.write(concatenatedOutput);
+			}
+			docFileWriter.write("\n\n");
+		}
+		catch(Exception e){
+			System.out.println("Error in Printing to file" + e.getMessage());
+			System.exit(-1);
+		}
 	}
 
 	/**
@@ -186,18 +235,16 @@ public class Lucene{
 			FileReader fr = null;
 			try {
 				Document doc = new Document();
-
 				// ===================================================
 				// add contents of file
 				// ===================================================
 				fr = new FileReader(f);
 				doc.add(new TextField("contents", fr));
 				doc.add(new StringField("path", f.getPath(), Field.Store.YES));
-				doc.add(new StringField("filename", f.getName(),
-						Field.Store.YES));
+				doc.add(new StringField("filename", f.getName(),Field.Store.YES));
 
 				writer.addDocument(doc);
-				System.out.println("Added: " + f);
+				System.out.println("Added: " + f);			//SOP
 			} catch (Exception e) {
 				System.out.println("Could not add: " + f);
 			} finally {
@@ -206,16 +253,22 @@ public class Lucene{
 		}
 
 		int newNumDocs = writer.numDocs();
-		System.out.println("");
-		System.out.println("************************");
-		System.out.println((newNumDocs - originalNumDocs) + " documents added.");
-		System.out.println("************************");
+		System.out.println("");										//SOP
+		System.out.println("************************");				//SOP
+		System.out.println((newNumDocs - originalNumDocs) + " documents added.");		//SOP
+		System.out.println("************************");				//SOP
 
 		queue.clear();
 	}
 
+	/**
+	 * Add files for indexing
+	 * 
+	 * @param file
+	 * 			File to be added.
+	 * 
+	 */
 	private void addFiles(File file) { 
-
 		if (!file.exists()) {
 			System.out.println(file + " does not exist.");
 		}
