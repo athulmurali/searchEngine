@@ -1,4 +1,4 @@
-import queryfile
+from bs4 import BeautifulSoup
 import math
 import corpus
 import indexer
@@ -13,7 +13,7 @@ qr_list = {}
 
 def call_jobs():
     global tfidf_count, dlength, qr_list
-    qr_list = queryfile.read_query()
+    qr_list = read_query()
     final_length = 0
     dlength = {}
     for item in ind_list:
@@ -64,6 +64,33 @@ def write_file(query_id, val, name, alg_name):
         ranking += 1
 
 
+def read_query():
+    query = {}
+    counter = 1
+    query_text = open('cacm.query.txt', 'r')
+    q_soup = BeautifulSoup(query_text, 'html.parser')
+    q_soup.prettify().encode('utf-8')
+    for text in q_soup.findAll('docno'):
+        text.extract()
+    for text in q_soup.findAll('doc'):
+        qr = text.get_text().strip(' \n\t')
+        qr = str(qr)
+        qr = qr.lower()
+        qr = corpus.transformation(qr)
+        write_query_file(counter, qr)
+        query[counter] = qr.split(" ")
+        counter += 1
+    return query
+
+
+def write_query_file(query_id, queries):
+    if query_id == 1:
+        with open("query.txt", 'w') as f:
+            f.write(str(query_id) + " " + queries + "\n")
+    else:
+        with open("query.txt", 'a') as f:
+            f.write(str(query_id) + " " + queries + "\n")
+
 def main():
     global ind_list, dlist
     print("Corpus Generation")
@@ -75,12 +102,6 @@ def main():
             if item[0] not in dlist:
                 dlist.append(item[0])
     call_jobs()
-
-
-def next_call():
-    next_input = input("Do you wish to continue (y or n):\n")
-    if next_input == "y" or next_input == "Y":
-        call_jobs()
 
 
 main()
