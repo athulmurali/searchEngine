@@ -1,8 +1,8 @@
+from bs4 import BeautifulSoup
+from nltk import ngrams
 import corpus
 import indexer
-import queryfile
 import BM25
-import highTF
 import os
 
 ind_list = {}
@@ -16,7 +16,7 @@ stopwords = []
 
 def call_jobs():
     global tfidf_count, dlength, qr_list, bm25_score, stopwords
-    qr_list = queryfile.read_query()
+    qr_list = read_query()
     final_length = 0
     dlength = {}
     for item in ind_list:
@@ -34,7 +34,7 @@ def call_jobs():
             bm25_score[each_document] = 0.0
         bm25_score = BM25.bm25(ind_list, query_id, qr_list[query_id], {}, dlength, final_length, bm25_score, [])
         sorted_bm25 = sorted(bm25_score.items(), key=lambda z: z[1], reverse=True)
-        high_tf = highTF.get_high_tf(sorted_bm25[:10], stopwords)
+        high_tf = get_high_tf(sorted_bm25[:10], stopwords)
         for each in high_tf:
             qr_list[query_id].append(each)
         for each_document in dlist:
@@ -61,6 +61,60 @@ def write_file(query_id, val, name, alg_name):
         ranking += 1
 
 
+def stop_words():
+    stopwords_list = []
+    for item in open('common_words', 'r').readlines():
+        stopwords_list.append(item.strip("\n"))
+    return stopwords_list
+
+
+def read_query():
+    query = {}
+    counter = 1
+    query_text = open('cacm.query.txt', 'r')
+    q_soup = BeautifulSoup(query_text, 'html.parser')
+    q_soup.prettify().encode('utf-8')
+    for text in q_soup.findAll('docno'):
+        text.extract()
+    for text in q_soup.findAll('doc'):
+        qr = text.get_text().strip(' \n\t')
+        qr = str(qr)
+        qr = qr.lower()
+        qr = corpus.transformation(qr)
+        write_query_file(counter, qr)
+        query[counter] = qr.split(" ")
+        counter += 1
+    return query
+
+
+def write_query_file(query_id, queries):
+    if query_id == 1:
+        with open("query.txt", 'w') as f:
+            f.write(str(query_id) + " " + queries + "\n")
+    else:
+        with open("query.txt", 'a') as f:
+            f.write(str(query_id) + " " + queries + "\n")
+
+
+def get_high_tf(count, stop_words):
+    unigrams = []
+    tf = {}
+    final = []
+    for item in count:
+        for each in ngrams((open("Corpus/" + str(item[0]), 'r').read()).split(), 1):
+            unigrams.append(each[0])
+    for item in unigrams:
+        if item in tf:
+            tf[item] += 1
+        else:
+            tf[item] = 1
+    sorted_tf = sorted(tf.items(), key=lambda x : x[1], reverse=True)
+    for each in sorted_tf:
+        if each[0] not in stop_words:
+            final.append(each[0])
+    return final[:5]
+
+
 def main():
     global ind_list, dlist, bm25_score, stopwords
     print("Corpus Generation")
@@ -71,7 +125,7 @@ def main():
         for item in ind_list[one]:
             if item[0] not in dlist:
                 dlist.append(item[0])
-    stopwords = queryfile.stopwords()
+    stopwords = stop_words()
     call_jobs()
 
 
