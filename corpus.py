@@ -10,6 +10,7 @@ dir = 'Corpus'
 
 def transformation(data):
     data = re.sub(r'[@_!\s^&*?#=+$~%:;\\/|<>(){}[\]"\']', ' ', data)
+    data = data.replace("\t", " ")
     term_list = []
     for term in data.split():
         term_len = len(term)

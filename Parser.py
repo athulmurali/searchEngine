@@ -53,6 +53,7 @@ def parse_directory_files(html_files_directory_path, destination_path):
 
 		# parsed_str = parse_html_file(file_name);
 		parsed_str = fetch_cacm_data(file_name)
+		parsed_str = transformation(parsed_str)
 		parsed_str = parsed_str.casefold()
 
 		file_name        = file_name.replace(raw_docs_folder_name,parsed_docs_folder_name)

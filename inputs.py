@@ -129,3 +129,22 @@ tele_damp_factor     = 0.85
 #Added for CACM retrieval by Athul
 #Parser.py uses the following
 CACM_PREFIX = "CACM-"
+
+
+
+#Adding for query_file 
+#relative path from the current directory
+
+#file_name 
+#folder_name
+current_dir =os.getcwd()
+query_file_name     = "Given\cacm_query.txt"
+query_rel_file_name = "Given\cacm_rel.txt"
+stopwords_file_name = "Given\common_words.txt"
+
+query_file_path     = os.path.join(current_dir,query_file_name)
+query_rel_file_path = os.path.join(current_dir,query_rel_file_name)
+
+
+#Added for stoplist:
+stop_list_file_name = os.path.join(current_dir,stopwords_file_name)

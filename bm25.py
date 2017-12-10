@@ -4,7 +4,7 @@ from inputs import *
 from file_functions import *;
 from Parser import *;
 from Indexer import build_inverted_index
-
+from CommonUtils import *
 
 query =  	"hurricane isabel damage";
 
@@ -15,9 +15,8 @@ inv_index			= build_inverted_index(parsed_documents_path,oneGram);
 docLengthDict       = getDocumentLengthDict();
 
 
-
-
-
+query_rel_docs_dict = get_query_rel_docs_dict();
+# print(query_rel_docs_dict)
 
 
 ################################################
@@ -82,11 +81,11 @@ def getDf(term):
 	if term in inv_index:
 		
 		tuplesList =inv_index[term];
-		print("df  of term ",len(tuplesList))
+		# print("df  of term ",len(tuplesList))
 		return len(tuplesList);
 	else:
 		return 0;
-print("Find russian ------------------", getDf("russian"))
+
 # *************************************************
 # getTfInDoc():
 
@@ -121,7 +120,7 @@ def  queryScoreDocument(query,docId):
 		# qfi  -  the term frequency in the query,
 		qfi = query.count(queryTerm)
 		ni  = getDf(queryTerm);
-		print("qfi.,................",qfi)
+		# print("qfi.,................",qfi)
 		docScore += termScoreDocument(qfi,queryTerm, docId,ni);
 	return docScore;
 
@@ -129,7 +128,7 @@ def  queryScoreDocument(query,docId):
 # The below function calculates  the score for a document 
 # for  a given term from the query
 def  termScoreDocument(qfi,term,docId,ni):
-	print("term_score .... ",qfi,term,docId)
+	# print("term_score .... ",qfi,term,docId)
 
 	K 	= calcK(docId);
 
@@ -175,7 +174,6 @@ def scoreAllDocuments(query, docList):
 	docScoreDict ={};
 	for docId in docList:
 		scoreListValues = [];
-		print("query in doc :",query)
 		score  =  queryScoreDocument(query, docId);
 		docScoreDict[docId]  = score;
 		# print(docId, "		: ",docScoreDict[docId]);	
@@ -226,7 +224,7 @@ def sortDocIdListByScore(docScoreDict):
 # example : [(23,9.0), (12,8.0)]
 
 def getSearchResults(query,hits = -1):
-	# print("processing query :  ", query)
+	print("Searching for :  ",query)
 	scoredDocList 		=	scoreAllDocuments(query,getdocIdList());
 	sortedDocScoreList 	=	sortDocIdListByScore(scoredDocList);
 	if hits == -1 : len(sortedDocScoreList)
@@ -241,10 +239,13 @@ def getSearchResults(query,hits = -1):
 def searchListOfQueries(queryList, hits = -1):
 	queryResults = {};
 
+
 	for query in queryList:
-		print("Query : ", query)
 		queryResults[query] = getSearchResults(query,hits);
+
 	return queryResults;
+
+
 
 def topHitsDictToString(topHitsDict,hideScores = False):
 	newStr = ""
@@ -264,13 +265,49 @@ def writeTopHitsDictToTxt(fileName,topHitsDict, hideScores = False):
 	return;
 
 
+def top_hit_dict_to_summarise(all_queries_results):
+    new_all_QueriesResults = ()
+    print(all_queries_results)
 
-list_of_queries = ["russian "]
+
+    for query in all_queries_results:
+
+        
+        print("query : ",query)
+        doc_id_list_with_scores = all_queries_results[query]
+        print("Doc id with scores ",doc_id_list_with_scores)
+        doc_id_list = [x[0] for x in doc_id_list_with_scores]
+        doc_id_list = tuple(doc_id_list)
+        print("new Doc id with scores ",doc_id_list)
+        print("query tuple ", (query,doc_id_list))
+
+        new_all_QueriesResults = new_all_QueriesResults + ((query,doc_id_list),)
+        print("new_all_QueriesResults", new_all_QueriesResults)
+    
+    
+    return new_all_QueriesResults
+
+
+
+list_of_queries = get_query_list();
 # topHitsDict = searchListOfQueries(listOfQueries,100);
-topHitsDict = searchListOfQueries(list_of_queries);
+topHitsTupTup = searchListOfQueries(list_of_queries,100);
 
-print(topHitsDictToString(topHitsDict, hideScores = False));
+# to_sumamrise  = top_hit_dict_to_summarise((("ab",((1,1.0), (2,2.0) )),("ab1",((11,1.0), (21,2.0) ))))
+to_sumamrise  = top_hit_dict_to_summarise(topHitsTupTup)
+print(to_sumamrise)
 
 
-writeTopHitsDictToTxt(bm25ResultsFile, topHitsDict,hideScores = True )
-writeTopHitsDictToTxt(bm25ScoredResultsFile, topHitsDict,hideScores = False )
+print(topHitsDictToString(topHitsTupTup, hideScores = False));
+
+
+writeTopHitsDictToTxt(bm25ResultsFile, topHitsTupTup,hideScores = True )
+writeTopHitsDictToTxt(bm25ScoredResultsFile, topHitsTupTup,hideScores = False )
+
+
+
+
+# def calcR(term,query_rel_doc_list,inv_index):
+
+
+

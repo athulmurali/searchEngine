@@ -5,7 +5,7 @@ RELEVANT     = "R"
 NON_RELEVANT = "N"
 
 from functools import reduce
-
+from CommonUtils import *
 
 # format
 # doc_relevance_table = {"1" : "R", "2" : "R", "3" : "N" , "4" : "R"}
@@ -223,3 +223,41 @@ print("MRR :", calcMRR(queries_results_tuples))
 
 get_precision_at_list = [1,2,3]
 print("P@K :", pAtK   (queries_results_tuples, get_precision_at_list))
+
+
+
+# takes  ( ("query", (1,13,14)),
+#           ("query2, (3,4,56)"))
+
+# returns ( ("query", ( (1,N) ,(13,R) ,(14, R))),
+#           ("query2", ((3,R), (4,N), (56,R))))
+
+def getRelevanceResult(query_results):
+    results_with_relevance = ()
+
+    for result in query_results:
+
+        query = result[0]
+        doc_id_list = result[1]
+        doc_id_rel_tup_tuples = ()
+
+
+        for doc_id in doc_id_list:
+
+            relevance = ""
+            print("DOc rele : ", str(get_rel_doc_with_query(query)))
+        
+            if str(doc_id) in str(get_rel_doc_with_query(query)):
+                relevance = "R"
+            else:
+                relevance = "N"
+            doc_id_rel_tuple = (doc_id,relevance)
+
+            doc_id_rel_tup_tuples = doc_id_rel_tup_tuples + (doc_id_rel_tuple,)
+     
+        results_with_relevance = results_with_relevance + ((query,(doc_id_rel_tup_tuples)),)
+        print(results_with_relevance)
+
+    return results_with_relevance;
+
+getRelevanceResult( (   ("intermediate languages used in construction of multi-targeted compilers tcoll",(1134,12,32) ), ("abcd1",(201,12,312))  ) )
