@@ -35,15 +35,11 @@ import org.apache.lucene.util.Version;
  * To completely index all files again, delete the index folder and run the 
  * program.
  * 
- * Queries sent to this program with multiple words should have words separated
- * with the following string :    <-->
  */
 public class Lucene{
 
 	// Declaring Constants
 	private static final String SYS_USER_DIR = System.getProperty("user.dir") ;
-	private static final String QUERY_DELIMITER = "<-->";
-	private static final String SPACE_KEY = " ";
 	private static final String OUTPUT_FILE_NAME = "Lucene_Result.txt";
 	private static final int MAX_RESULTS_PER_QUERY = 100;
 
@@ -59,7 +55,7 @@ public class Lucene{
 	 * 			args[0] - will contain path of the folder to store index in.
 	 * 			args[1] - will contain path of the folder to get raw documents from.
 	 *			All queries will be in the args and each word in a query will be
-	 * 			delimited by the following symbol <-->
+	 * 			delimited by space
 	 * 
 	 * @throws IOException
 	 * 			when exception occurs.
@@ -135,10 +131,10 @@ public class Lucene{
 
 		for(int i = 2; i < queries.length; i++)	{
 			try {
-				String input_query = queries[i].split(":")[1].replace(QUERY_DELIMITER,SPACE_KEY);
+				String input_query = queries[i].split(":")[1];
 				Query q = new QueryParser(Version.LUCENE_47, "contents", analyzer)
 						.parse(input_query.toLowerCase());
-				collector = TopScoreDocCollector.create(1000, true);
+				collector = TopScoreDocCollector.create(3204, true);
 				searcher.search(q, collector);
 				ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
@@ -170,12 +166,12 @@ public class Lucene{
 	 */
 	private static void printToFile(ScoreDoc[] hits, IndexSearcher searcher, String Qid, FileWriter docFileWriter) throws IOException {
 		try {			
-			System.out.println("Found " + hits.length + " hits.");	//SOP
+			//System.out.println("Found " + hits.length + " hits.");	//SOP
 			for (int j = 0; j < Math.min(MAX_RESULTS_PER_QUERY, hits.length); ++j) {
 				int docId = hits[j].doc;
 				Document d = searcher.doc(docId);
 				String filename = d.get("filename");
-				filename = filename.substring(0, filename.length() - 4);
+				filename = filename.substring(0, filename.length() - 5);
 				String concatenatedOutput = 
 						Qid + 
 						" Q0" + 
