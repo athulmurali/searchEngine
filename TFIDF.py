@@ -55,17 +55,17 @@ def tfidf(index, query, n, doc_length, score, stopword):
 
 
 def write_file_tfidf(query_id, val, name, alg_name):
-    if not os.path.exists("Phase1"):
-        os.makedirs("Phase1")
+    if not os.path.exists("TFIDF_Output"):
+        os.makedirs("TFIDF_Output")
     ranking = 1
     for item in val:
         document = str(item[0])[:len(item[0])-4]
         if query_id == 1 and ranking == 1:
-            with open("Phase1/" + name + ".txt", 'w') as f:
+            with open("TFIDF_Output/" + name + ".txt", 'w') as f:
                 f.write(str(query_id) + " Q0 " + document + " " + str(ranking) + " " + str(item[1]) + " " +
                         alg_name + "\n")
         else:
-            with open("Phase1/" + name + ".txt", 'a') as f:
+            with open("TFIDF_Output/" + name + ".txt", 'a') as f:
                 f.write(str(query_id) + " Q0 " + document + " " + str(ranking) + " " + str(item[1]) + " " +
                         alg_name + "\n")
         ranking += 1
