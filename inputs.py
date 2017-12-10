@@ -14,8 +14,8 @@ listOfQueries = [\
 
 
 #Added for BM 25 --------------------
-bm25ResultsFile       = "bm25Results.txt"
-bm25ScoredResultsFile = "bm25ScoredResults.txt"
+bm25ResultsFile       = "Results\\bm25Results.txt"
+bm25ScoredResultsFile = "Results\\bm25ScoredResults.txt"
 
 
 
@@ -140,11 +140,16 @@ CACM_PREFIX = "CACM-"
 current_dir =os.getcwd()
 query_file_name     = "Given\cacm_query.txt"
 query_rel_file_name = "Given\cacm_rel.txt"
+
+smoothened_LM_file_name = "Results\smoothened_LM.txt"
 stopwords_file_name = "Given\common_words.txt"
 
 query_file_path     = os.path.join(current_dir,query_file_name)
 query_rel_file_path = os.path.join(current_dir,query_rel_file_name)
+smoothened_LM_path = os.path.join(current_dir,smoothened_LM_file_name)
 
 
 #Added for stoplist:
 stop_list_file_name = os.path.join(current_dir,stopwords_file_name)
+
+bm25_summarisation_file = "Given\\bm25_summarisation.txt"
