@@ -17,6 +17,9 @@ docLengthDict       = getDocumentLengthDict();
 
 
 
+
+
+
 ################################################
 
 def calcdocLengthSum():
@@ -77,11 +80,13 @@ def getDf(term):
 	default  =0;
 
 	if term in inv_index:
+		
 		tuplesList =inv_index[term];
+		print("df  of term ",len(tuplesList))
 		return len(tuplesList);
 	else:
 		return 0;
-
+print("Find russian ------------------", getDf("russian"))
 # *************************************************
 # getTfInDoc():
 
@@ -109,24 +114,26 @@ def getTopHits(rankedScoreList,n):
 # for the complete query
 # ******************************************
 def  queryScoreDocument(query,docId):
-	termList = query.split();
+	termList = query.split(" ");
 	# Doc score for the given query
 	docScore = 0 
-	for term in termList:
+	for queryTerm in termList:
 		# qfi  -  the term frequency in the query,
-		qfi = query.count(term)
-		docScore += termScoreDocument(qfi,term, docId);
+		qfi = query.count(queryTerm)
+		ni  = getDf(queryTerm);
+		print("qfi.,................",qfi)
+		docScore += termScoreDocument(qfi,queryTerm, docId,ni);
 	return docScore;
 
 
 # The below function calculates  the score for a document 
 # for  a given term from the query
-def  termScoreDocument(qfi,term,docId):
+def  termScoreDocument(qfi,term,docId,ni):
+	print("term_score .... ",qfi,term,docId)
 
 	K 	= calcK(docId);
 
 	# ==========================================
-	ni = getDf(term);
 	fi = getTfInDoc(term, docId)
 	numerator =   ((ri + 0.5) /  (R - ri + 0.5))
 	denominator =(ni - ri + 0.5)/(N - ni - R + ri + 0.5)
@@ -168,6 +175,7 @@ def scoreAllDocuments(query, docList):
 	docScoreDict ={};
 	for docId in docList:
 		scoreListValues = [];
+		print("query in doc :",query)
 		score  =  queryScoreDocument(query, docId);
 		docScoreDict[docId]  = score;
 		# print(docId, "		: ",docScoreDict[docId]);	
@@ -217,10 +225,11 @@ def sortDocIdListByScore(docScoreDict):
 # the top n docId:score tuples array 
 # example : [(23,9.0), (12,8.0)]
 
-def getSearchResults(query,hits):
+def getSearchResults(query,hits = -1):
 	# print("processing query :  ", query)
 	scoredDocList 		=	scoreAllDocuments(query,getdocIdList());
 	sortedDocScoreList 	=	sortDocIdListByScore(scoredDocList);
+	if hits == -1 : len(sortedDocScoreList)
 	topHitsList 		= 	getTopHits(sortedDocScoreList, hits);
 	return topHitsList
 
@@ -229,10 +238,11 @@ def getSearchResults(query,hits):
 # for each query in queryList
 	# with query from queryList as key
 	# results : List of tuples as valu
-def searchListOfQueries(queryList, hits):
+def searchListOfQueries(queryList, hits = -1):
 	queryResults = {};
 
 	for query in queryList:
+		print("Query : ", query)
 		queryResults[query] = getSearchResults(query,hits);
 	return queryResults;
 
@@ -253,7 +263,12 @@ def writeTopHitsDictToTxt(fileName,topHitsDict, hideScores = False):
 		file.write(topHitsDictToString(topHitsDict, hideScores) );
 	return;
 
-topHitsDict = searchListOfQueries(listOfQueries,100);
+
+
+list_of_queries = ["russian "]
+# topHitsDict = searchListOfQueries(listOfQueries,100);
+topHitsDict = searchListOfQueries(list_of_queries);
+
 print(topHitsDictToString(topHitsDict, hideScores = False));
 
 

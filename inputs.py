@@ -45,7 +45,7 @@ sorted_tf_file_name = "sorted_tf.txt"
 sorted_df_file_name = "sorted_df.txt"
 
 n_grams_to_do = [1,2,3]
-
+n_grams_to_do = [1]
 
 # changable user data
 crawl_delay      = 0;
@@ -124,3 +124,8 @@ tele_damp_factor     = 0.85
 
 # if word.startswith(abc):
 # 	print("true");
+
+
+#Added for CACM retrieval by Athul
+#Parser.py uses the following
+CACM_PREFIX = "CACM-"
