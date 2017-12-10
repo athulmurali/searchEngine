@@ -91,12 +91,13 @@ def write_query_file(query_id, queries):
         with open("query.txt", 'a') as f:
             f.write(str(query_id) + " " + queries + "\n")
 
+
 def main():
     global ind_list, dlist
     print("Corpus Generation")
     corpus.fetch_data()
     print("Indexer")
-    ind_list = indexer.index_creation("corpus/")
+    ind_list = indexer.index_creation("cacm/")
     for one in ind_list:
         for item in ind_list[one]:
             if item[0] not in dlist:
